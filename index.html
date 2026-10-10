@@ -672,6 +672,28 @@
             Rows with no units or no grade are left out of the total.
         </div>
 
+        <div class="card table-card">
+            <h2>Scholarship eligibility</h2>
+            <p class="card-description">Based on the GWA and grades in the table above.</p>
+
+            <div id="scholarshipHint" class="hint" role="status">
+                Add your subjects' units and grades above to check.
+            </div>
+
+            <div id="scholarshipResult" class="result-box" aria-live="polite">
+                <div class="result-label" id="scholarshipLabel">Status</div>
+                <div class="result-number" id="scholarshipNumber" style="font-size: 26px;"></div>
+                <div class="result-message" id="scholarshipMessage"></div>
+            </div>
+
+            <div class="formula">
+                <strong>Requirements:</strong><br>
+                College Scholar: no final grade below 85 in any subject, and a GWA of 90–94.
+                <br><br>
+                University Scholar: no final grade below 87 in any subject, and a GWA of 95 or higher.
+            </div>
+        </div>
+
     </div>
 
 </main>
@@ -1245,6 +1267,7 @@
         input.addEventListener("input", function () {
             onInput(input.value);
             renderGwaResult();
+        renderScholarship();
             persistGwa();
         });
         td.appendChild(input);
@@ -1281,6 +1304,7 @@
         });
 
         renderGwaResult();
+        renderScholarship();
     }
 
     function renderGwaResult() {
@@ -1309,6 +1333,74 @@
         $("gwaNumber").textContent = gwa.toFixed(2);
         $("gwaSub").textContent = totalUnits + " total unit" + (totalUnits === 1 ? "" : "s") +
             " across " + counted + " subject" + (counted === 1 ? "" : "s");
+    }
+
+    function renderScholarship() {
+        const hint = $("scholarshipHint");
+        const box = $("scholarshipResult");
+
+        let totalUnits = 0;
+        let totalPoints = 0;
+        let minGrade = null;
+        let counted = 0;
+
+        gwaRows.forEach(function (row) {
+            const u = parseFloat(row.units);
+            const g = parseFloat(row.grade);
+            if (!isNaN(u) && u > 0 && !isNaN(g)) {
+                totalUnits += u;
+                totalPoints += u * g;
+                minGrade = minGrade === null ? g : Math.min(minGrade, g);
+                counted++;
+            }
+        });
+
+        if (!counted || totalUnits <= 0) {
+            hint.style.display = "block";
+            box.className = "result-box";
+            return;
+        }
+        hint.style.display = "none";
+
+        const gwa = totalPoints / totalUnits;
+        const college = minGrade >= 85 && gwa >= 90 && gwa <= 94;
+        const university = minGrade >= 87 && gwa >= 95;
+
+        const label = $("scholarshipLabel");
+        const number = $("scholarshipNumber");
+        const message = $("scholarshipMessage");
+
+        if (university) {
+            box.className = "result-box show success";
+            label.textContent = "You qualify for";
+            number.textContent = "University Scholar";
+            message.textContent = "Your lowest subject grade is " + minGrade.toFixed(1) +
+                " (at least 87 needed) and your GWA is " + gwa.toFixed(2) + " (95 or higher needed).";
+        } else if (college) {
+            box.className = "result-box show success";
+            label.textContent = "You qualify for";
+            number.textContent = "College Scholar";
+            message.textContent = "Your lowest subject grade is " + minGrade.toFixed(1) +
+                " (at least 85 needed) and your GWA is " + gwa.toFixed(2) + " (90 to 94 needed).";
+        } else {
+            box.className = "result-box show danger";
+            label.textContent = "Not yet eligible";
+            number.textContent = "";
+            const reasons = [];
+            if (minGrade < 85) {
+                reasons.push("a subject grade of " + minGrade.toFixed(1) + " is below the 85 minimum");
+            }
+            if (gwa < 90) {
+                reasons.push("your GWA of " + gwa.toFixed(2) + " is below 90");
+            } else if (gwa > 94 && !(minGrade >= 87 && gwa >= 95)) {
+                if (gwa >= 95) {
+                    reasons.push("your GWA of " + gwa.toFixed(2) + " qualifies for University Scholar, but a subject grade of " + minGrade.toFixed(1) + " is below the 87 minimum");
+                } else {
+                    reasons.push("your GWA of " + gwa.toFixed(2) + " falls between the College Scholar (90–94) and University Scholar (95+) ranges");
+                }
+            }
+            message.textContent = reasons.length ? "Not eligible: " + reasons.join("; ") + "." : "Not eligible for either award yet.";
+        }
     }
 
     $("addGwaRow").addEventListener("click", function () {
