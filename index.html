@@ -688,7 +688,7 @@
 
             <div class="formula">
                 <strong>Requirements:</strong><br>
-                College Scholar: no final grade below 85 in any subject, and a GWA of 90–94.
+                College Scholar: no final grade below 85 in any subject, and a GWA of 90–94.99.
                 <br><br>
                 University Scholar: no final grade below 87 in any subject, and a GWA of 95 or higher.
             </div>
@@ -1363,7 +1363,7 @@
         hint.style.display = "none";
 
         const gwa = totalPoints / totalUnits;
-        const college = minGrade >= 85 && gwa >= 90 && gwa <= 94;
+        const college = minGrade >= 85 && gwa >= 90 && gwa <= 94.99;
         const university = minGrade >= 87 && gwa >= 95;
 
         const label = $("scholarshipLabel");
